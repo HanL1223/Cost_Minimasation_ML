@@ -7,7 +7,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from pydantic_settings import BaseSettings, SettingsConfigDict 
 from typing import AsyncGenerator
-
+import numpy as np
 
 
 CURRENT_FILE_PATH = os.path.abspath(__file__) 
@@ -76,18 +76,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(lifespan=lifespan)
 
+
+
 @app.get("/train", tags=["Data"], summary="Get Training Data")
 async def get_train_data():
-    """Returns the training dataset as a list of JSON records (safely converted)."""
-    # 1. Ensure the DataFrame exists
+    """Returns the training dataset as JSON-safe numeric types."""
+    
     if DF_TRAIN is None:
         return {"error": "Training data not loaded"}, 500
-    
-    # 2. Convert all columns to strings to ensure JSON compatibility 
-    # This prevents failures from numpy types, dates, etc.
-    df_safe = DF_TRAIN.apply(lambda x: x.astype(str), axis=0)
-    
+
+    df_safe = DF_TRAIN.copy()
+
+    # Convert numeric columns to float
+    numeric_cols = df_safe.select_dtypes(include=['number']).columns
+    df_safe[numeric_cols] = df_safe[numeric_cols].astype(float)
+
+    # Replace NaN and infinite values with 0 (or another value)
+    df_safe[numeric_cols] = df_safe[numeric_cols].replace([np.inf, -np.inf], np.nan)
+    df_safe[numeric_cols] = df_safe[numeric_cols].fillna(0.0)
+
     return df_safe.to_dict(orient='records')
+
 
 @app.get("/test", tags=["Data"], summary="Get Test Data")
 async def get_test_data():
@@ -96,7 +105,9 @@ async def get_test_data():
         return {"error": "Test data not loaded"}, 500
         
     # Convert all columns to strings
-    df_safe = DF_TEST.apply(lambda x: x.astype(str), axis=0)
+    df_safe = DF_TEST.copy()
+    numeric_cols = df_safe.select_dtypes(include=['number']).columns
+    df_safe[numeric_cols] = df_safe[numeric_cols].astype(float)
     
     return df_safe.to_dict(orient='records')
 

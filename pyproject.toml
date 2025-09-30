@@ -8,6 +8,7 @@ dependencies = [
     "cmake>=4.0.3",
     "fastapi>=0.115.12",
     "imbalanced-learn>=0.13.0",
+    "imblearn>=0.0",
     "ipykernel>=6.29.5",
     "jupyter>=1.1.1",
     "lightgbm>=4.6.0",
