@@ -113,7 +113,6 @@ async def get_test_data():
 
 # -----------------------------------------------------------------------------------
 
-# Optional: Allows running the file directly via `python src/main.py`
 if __name__ == "__main__":
     # Ensure you are running uvicorn from the project root for pathing to work reliably
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
