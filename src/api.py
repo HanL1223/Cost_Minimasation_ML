@@ -17,7 +17,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(CURRENT_FILE_PATH))
 
 # --- Configuration ---
 # Update paths to point to the 'data' folder in the root directory
-LOCAL_DATA_PATH = os.path.join(PROJECT_ROOT, "data","raw\\" "Train.csv")
+LOCAL_DATA_PATH = os.path.join(PROJECT_ROOT, "data","raw//" "Train.csv")
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 
@@ -108,6 +108,11 @@ async def get_test_data():
     df_safe = DF_TEST.copy()
     numeric_cols = df_safe.select_dtypes(include=['number']).columns
     df_safe[numeric_cols] = df_safe[numeric_cols].astype(float)
+
+    # Replace NaN and infinite values with 0 (or another value)
+    df_safe[numeric_cols] = df_safe[numeric_cols].replace([np.inf, -np.inf], np.nan)
+    df_safe[numeric_cols] = df_safe[numeric_cols].fillna(0.0)
+
     
     return df_safe.to_dict(orient='records')
 

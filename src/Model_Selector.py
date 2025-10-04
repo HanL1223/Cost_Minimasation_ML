@@ -84,7 +84,7 @@ class CrossValidationEvaluation(ModelSelection):
     def evaluate(self, models: List[Tuple[str, object]], X: pd.DataFrame, y: pd.Series) -> dict:
         logger.info("Starting CV evaluation with maintenance cost scoring")
         results = {}
-        kfold = StratifiedKFold(n_splits=self.n_splits,shuffle=True,random_state=self.random_state)
+        kfold = StratifiedKFold(n_split=self.n_split,shuffle=True,random_state=self.random_state)
         for name,model in models:
             try:
                 cv_scores = cross_val_score(model, X, y, cv=kfold, scoring=self.scorer)
