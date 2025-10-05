@@ -1,32 +1,35 @@
+# app.py
 import streamlit as st
 import pandas as pd
-import requests
+from src.model_loader import ModelLoader
+import os
 
-st.title("ML Model Prediction Interface")
+st.title("Cost Prediction App")
 
-# Option 1: Upload CSV
-uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+# Upload data: CSV or JSON
+uploaded_file = st.file_uploader(
+    "Upload your data (CSV or JSON)", type=["csv", "json"]
+)
+
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.write("Uploaded Data:")
-    st.dataframe(df)
-    
-    if st.button("Predict"):
-        response = requests.post("http://127.0.0.1:8000/predict", json=df.to_dict(orient="records"))
-        predictions = response.json()
-        st.write("Predictions:")
-        st.write(predictions)
+    # Read data
+    if uploaded_file.name.endswith(".csv"):
+        input_data = pd.read_csv(uploaded_file)
+    elif uploaded_file.name.endswith(".json"):
+        input_data = pd.read_json(uploaded_file)
+    else:
+        st.error("Unsupported file format")
+        st.stop()
 
-# Option 2: Input manually
-st.subheader("Or input manually")
-num_features = 5  # adjust based on your model
-input_data = {}
-for i in range(1, num_features + 1):
-    input_data[f"V{i}"] = st.number_input(f"V{i}")
+    st.write("Input Data Preview:")
+    st.dataframe(input_data.head())
 
-if st.button("Predict Single Sample"):
-    df_manual = pd.DataFrame([input_data])
-    response = requests.post("http://127.0.0.1:8000/predict", json=df_manual.to_dict(orient="records"))
-    prediction = response.json()
-    st.write("Prediction:")
-    st.write(prediction)
+    # Load trained model
+    model_path = os.path.join("models", "tuned", "XGBClassifier_optuna_tuned.pkl")
+    model = ModelLoader.load_model(model_path)
+
+    # Perform inference
+    st.write("Running inference...")
+    predictions = ModelLoader.predict(model, input_data)
+    st.write("Predictions:")
+    st.dataframe(predictions)

@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 class ModelSelection(ABC):
     @abstractmethod
-    def evaluate(self,model:list[tuple[str,object]],X:pd.DataFrame,y:pd.Series) ->dict:
+    def evaluate(self,model:List[Tuple[str, object]],X:pd.DataFrame,y:pd.Series) ->dict:
         pass
     
 
@@ -84,7 +84,7 @@ class CrossValidationEvaluation(ModelSelection):
     def evaluate(self, models: List[Tuple[str, object]], X: pd.DataFrame, y: pd.Series) -> dict:
         logger.info("Starting CV evaluation with maintenance cost scoring")
         results = {}
-        kfold = StratifiedKFold(n_split=self.n_split,shuffle=True,random_state=self.random_state)
+        kfold = StratifiedKFold(n_splits=self.n_split,shuffle=True,random_state=self.random_state)
         for name,model in models:
             try:
                 cv_scores = cross_val_score(model, X, y, cv=kfold, scoring=self.scorer)
@@ -96,7 +96,7 @@ class CrossValidationEvaluation(ModelSelection):
                 }
                 logger.info(f"{name}: Mean cost ratio = {cv_scores.mean():.4f} (±{cv_scores.std():.4f})")
             except Exception as e:
-                logger.error(f"Error evaluateing {name} : {str(e)}")
+                logger.error(f"Error evaluating {name} : {str(e)}")
                 results[name] = {
                     'error': str(e),
                     'mean_score': np.nan,
@@ -108,7 +108,7 @@ class CrossValidationEvaluation(ModelSelection):
 class ModelEvaluator:
     def __init__(self, strategy: ModelSelection):
         self._strategy = strategy
-        self._last_score = None
+        self._last_results = None
         
     def set_strategy(self, strategy: ModelSelection):
         """Set a new evaluation strategy"""
@@ -148,7 +148,7 @@ class ModelEvaluator:
 
 
     # Example usage
-    if __name__ == "__main__":
-        pass
+if __name__ == "__main__":
+    pass
 
 
