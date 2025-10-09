@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.combine import SMOTEENN
-from src.logger import get_logger
+from src.Get_Logging_Config import get_logger
 
 logger = get_logger(__name__)
 
@@ -36,6 +36,7 @@ class SMOTESampler(DataSampler):
         df_resampled = pd.DataFrame(X_res, columns=X.columns)
         df_resampled[target_col] = y_res
         logger.info(f"SMOTE complete. Output size: {df_resampled.shape}")
+        logger.info(f"y Class: {df_resampled[target_col].value_counts()}")
         return df_resampled
 
 
@@ -58,6 +59,7 @@ class UnderSampler(DataSampler):
         df_resampled = pd.DataFrame(X_res, columns=X.columns)
         df_resampled[target_col] = y_res
         logger.info(f"Undersampling complete. Output size: {df_resampled.shape}")
+        logger.info(f"y Class: {df_resampled[target_col].value_counts()}")
         return df_resampled
 
 
@@ -78,6 +80,7 @@ class SMOTEENNSampler(DataSampler):
         df_resampled = pd.DataFrame(X_res, columns=X.columns)
         df_resampled[target_col] = y_res
         logger.info(f"SMOTEENN complete. Output size: {df_resampled.shape}")
+        logger.info(f"y Class: {df_resampled[target_col].value_counts()}")
         return df_resampled
 
 class SamplerFactory:

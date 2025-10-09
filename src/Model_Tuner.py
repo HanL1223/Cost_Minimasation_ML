@@ -11,24 +11,25 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from typing import Any, Dict
 import optuna   
 
-from src.logger import get_logger  # import logger
+from src.Get_Logging_Config import get_logger  # import logger
+from src.Model_Selector import CrossValidationEvaluation
 
 
 logger = get_logger(__name__)
 
 
-#Scorer
-def minimum_vs_model_cost(y_true, y_pred, cost_params={'tp_cost': 15, 'fp_cost': 5, 'fn_cost': 40}):
-    cm = confusion_matrix(y_true, y_pred)
-    TP = cm[1, 1]
-    FP = cm[0, 1]
-    FN = cm[1, 0]
+# #Scorer
+# def minimum_vs_model_cost(y_true, y_pred, cost_params={'tp_cost': 15, 'fp_cost': 5, 'fn_cost': 40}):
+#     cm = confusion_matrix(y_true, y_pred)
+#     TP = cm[1, 1]
+#     FP = cm[0, 1]
+#     FN = cm[1, 0]
 
-    min_cost = (TP + FN) * cost_params['fn_cost']
-    model_cost = (TP * cost_params['tp_cost'] + FP * cost_params['fp_cost'] + FN * cost_params['fn_cost'])
-    return min_cost / model_cost
+#     min_cost = (TP + FN) * cost_params['fn_cost']
+#     model_cost = (TP * cost_params['tp_cost'] + FP * cost_params['fp_cost'] + FN * cost_params['fn_cost'])
+#     return min_cost / model_cost
 
-custom_scorer = make_scorer(minimum_vs_model_cost, greater_is_better=True)
+# custom_scorer = make_scorer(minimum_vs_model_cost, greater_is_better=True)
 
 
 # ------------------------------------------------------
@@ -96,7 +97,8 @@ class OptunaTuning:
         kfold = StratifiedKFold(n_splits=self.cv_folds, shuffle=True, random_state=self.random_state)
 
         # Evaluate with cross-validation using custom scorer
-        scores = cross_val_score(model, X, y, cv=kfold, scoring=custom_scorer, n_jobs=-1)
+        scorer = CrossValidationEvaluation._create_default_scorer()
+        scores = cross_val_score(model, X, y, cv=kfold, scoring=scorer, n_jobs=-1)
         mean_score = np.mean(scores)
         logger.debug(f"Trial params: {params} | Mean Score: {mean_score:.4f}")
 
@@ -132,7 +134,7 @@ class OptunaTuning:
     # Save Tuned Model
     # --------------------------------------------------
     @staticmethod
-    def save_tuned_model(name: str, model, path="models/tuned"):
+    def save_tuned_model(name: str, model, path="../models/tuned"):
         os.makedirs(path, exist_ok=True)
         model_path = os.path.join(path, f"{name}_optuna_tuned.pkl")
         dump(model, model_path)

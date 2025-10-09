@@ -3,7 +3,7 @@ import zipfile
 import pandas as pd
 import requests
 from abc import ABC, abstractmethod
-from src.logger import get_logger  # import logger
+from src.Get_Logging_Config import get_logger  # import logger
 
 logger = get_logger(__name__)
 

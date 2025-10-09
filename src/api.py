@@ -8,6 +8,10 @@ from contextlib import asynccontextmanager
 from pydantic_settings import BaseSettings, SettingsConfigDict 
 from typing import AsyncGenerator
 import numpy as np
+from src.Get_Logging_Config import get_logger
+
+logger=get_logger(__name__)
+
 
 
 CURRENT_FILE_PATH = os.path.abspath(__file__) 
@@ -35,9 +39,9 @@ def load_and_split_data():
     global DF_TRAIN , DF_TEST
 
     if DF_TRAIN is not None and DF_TRAIN is not None:
-        print("Use existing cache")
+        logger.info("Use existing cache")
         return
-    print(f"Server loading and splitting data from: {LOCAL_DATA_PATH}")
+    logger.info(f"Server loading and splitting data from: {LOCAL_DATA_PATH}")
 
     try:
         if not os.path.exists(LOCAL_DATA_PATH):
@@ -53,7 +57,7 @@ def load_and_split_data():
         print(f"Data ready. Train set: {len(DF_TRAIN)} rows, Test set: {len(DF_TEST)} rows.")
 
     except Exception as e:
-        print(f"WARRING: Could not load or split data.")
+        logger.error(f"WARRING: Could not load or split data.")
         print(e)
         raise RuntimeError("Data Ingestion Failure") from e
     

@@ -5,7 +5,7 @@ import joblib
 import pandas as pd
 from sklearn.base import ClassifierMixin
 from xgboost import XGBClassifier
-from src.logger import get_logger  # import logger
+from src.Get_Logging_Config import get_logger  # import logger
 import optuna   
 
 logger = get_logger(__name__)

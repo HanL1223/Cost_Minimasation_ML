@@ -1,7 +1,7 @@
 import os
 from joblib import load
 import pandas as pd
-from src.logger import get_logger  # Use your existing logger
+from src.Get_Logging_Config import get_logger  # Use your existing logger
 
 logger = get_logger(__name__)
 

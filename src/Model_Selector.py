@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from abc import ABC, abstractmethod
-from src.logger import get_logger  # import logger
+from src.Get_Logging_Config import get_logger  # import logger
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import make_scorer, confusion_matrix
 from joblib import dump
@@ -18,136 +18,104 @@ class ModelSelection(ABC):
     
 
 class CrossValidationEvaluation(ModelSelection):
-    def __init__(self,n_split = 5 ,random_state = 42,scorer = None, cost_params = {'tp_cost': 15, 'fp_cost': 5, 'fn_cost': 40}):
-        """
-           Cross-validation evaluator with cost-sensitive scoring.
-
-        This class evaluates multiple models using stratified k-fold cross-validation.
-        By default, it applies a custom cost-based scoring function designed to
-        measure the trade-off between model performance and domain-specific costs.
-
-        Parameters
-        ----------
-        n_split : int, default=5
-            Number of stratified folds for cross-validation.
-        random_state : int, default=1
-            Random seed for reproducible splits.
-        scorer : callable, optional
-            A custom scorer function. If None, a default cost-based scorer is created
-            via `_create_default_scorer()`.
-            - Custom scorer must accept (y_true, y_pred).
-            - Should return a numeric score (higher = better).
-        cost_params : dict, default={'tp_cost': 15, 'fp_cost': 5, 'fn_cost': 40}
-            Weights for evaluating classification outcomes:
-            - 'tp_cost': reward/weight for true positives
-            - 'fp_cost': penalty for false positives
-            - 'fn_cost': penalty for false negatives
-            These are used by the default scorer.
-
-        Default Scorer
-        --------------
-        The default scorer computes a **cost ratio**:
-        - Calculates confusion matrix counts (TP, FP, FN).
-        - Defines:
-            * Minimum cost = (TP + FN) * fn_cost
-            * Model cost   = TP*tp_cost + FP*fp_cost + FN*fn_cost
-        - Returns ratio: `min_cost / model_cost`
-          (values closer to 1 mean the model approaches the theoretical minimum cost).
-
-        Methods
-        -------
-        evaluate(models, X, y) -> dict
-            Runs cross-validation for each model and returns mean score,
-            standard deviation, all fold scores, and cost ratio.
-        """
-        self.n_split = n_split
-        self.random_state = random_state
-        self.scorer = scorer
-        self.cost_params = cost_params
-
-    def _create_default_scorer(self):
-        """
-        
-        """
-        def minimum_vs_model_cost(y_true,y_pred):
-            cm = confusion_matrix(y_true, y_pred)
-            TP = cm[1, 1]
-            FP = cm[0, 1]
-            FN = cm[1, 0]
-            min_cost = (TP + FN) * self.cost_params['fn_cost']
-            model_cost = (TP * self.cost_params['tp_cost'] + 
-                          FP * self.cost_params['fp_cost'] + 
-                          FN * self.cost_params['fn_cost'])
-            return min_cost/model_cost
-        return make_scorer(minimum_vs_model_cost,greater_is_better= True)
+    """Evaluate models via stratified k-fold CV using a cost-based scorer."""
     
-    def evaluate(self, models: List[Tuple[str, object]], X: pd.DataFrame, y: pd.Series) -> dict:
-        logger.info("Starting CV evaluation with maintenance cost scoring")
+    def __init__(self, n_splits: int = 5, random_state: int = 42, 
+                 scorer=None, cost_params=None):
+        self.n_splits = n_splits
+        self.random_state = random_state
+        self.cost_params = cost_params or {'tp_cost': 15, 'fp_cost': 5, 'fn_cost': 40}
+        self.scorer = scorer if scorer is not None else self._create_default_scorer()
+    @staticmethod
+    def _create_default_scorer():
+        cost_params = {'tp_cost': 15, 'fp_cost': 5, 'fn_cost': 40}
+
+        def cost_ratio(y_true, y_pred):
+            cm = confusion_matrix(y_true, y_pred)
+            TN, FP, FN, TP = cm.ravel()
+
+            # ⚙️ Uses cost_params local variable
+            repair = cost_params['tp_cost']
+            replacement = cost_params['fn_cost']
+            inspection = cost_params['fp_cost']
+
+            min_cost = (TP + FN) * repair
+            model_cost = (TP * repair) + (FN * replacement) + (FP * inspection)
+
+            return 0 if model_cost == 0 else min_cost / model_cost
+
+        return make_scorer(cost_ratio, greater_is_better=True)
+    
+    def evaluate(self, models: List[Tuple[str, object]], 
+                 X: pd.DataFrame, y: pd.Series) -> dict:
+        """Run cross-validation for each model and compute cost ratios."""
+        logger.info("Starting cross-validation with cost-sensitive scoring")
         results = {}
-        kfold = StratifiedKFold(n_splits=self.n_split,shuffle=True,random_state=self.random_state)
-        for name,model in models:
+        kfold = StratifiedKFold(n_splits=self.n_splits, shuffle=True, 
+                                random_state=self.random_state)
+
+        for name, model in models:
             try:
-                cv_scores = cross_val_score(model, X, y, cv=kfold, scoring=self.scorer)
+                scores = cross_val_score(model, X, y, cv=kfold, scoring=self.scorer)
                 results[name] = {
-                    'mean_score': cv_scores.mean(),
-                    'std_dev': cv_scores.std(),
-                    'all_scores': cv_scores,
-                    'cost_ratio': cv_scores.mean()  # The score is already a cost ratio
+                    'mean_score': scores.mean(),
+                    'std_dev': scores.std(),
+                    'all_scores': scores,
                 }
-                logger.info(f"{name}: Mean cost ratio = {cv_scores.mean():.4f} (±{cv_scores.std():.4f})")
+                logger.info(f"{name}: Mean cost ratio = {scores.mean():.4f} (±{scores.std():.4f})")
             except Exception as e:
-                logger.error(f"Error evaluating {name} : {str(e)}")
-                results[name] = {
-                    'error': str(e),
-                    'mean_score': np.nan,
-                    'std_dev': np.nan
-                }
+                logger.error(f"Error evaluating {name}: {e}")
+                results[name] = {'error': str(e)}
+
         return results
     
-#Actual Evaluator
+# ----------  Model Evaluator  ----------
 class ModelEvaluator:
+    """High-level orchestrator for evaluating and selecting models."""
+    
     def __init__(self, strategy: ModelSelection):
         self._strategy = strategy
-        self._last_results = None
-        
+        self._results = None
+
     def set_strategy(self, strategy: ModelSelection):
-        """Set a new evaluation strategy"""
-        logger.info("Changing evaluation strategy")
+        """Swap evaluation strategy at runtime."""
+        logger.info("Switching evaluation strategy")
         self._strategy = strategy
-        
-    def evaluate_models(self, models: List[Tuple[str, object]], X: pd.DataFrame, y: pd.Series) -> dict:
-        """Evaluate models using the current strategy"""
-        logger.info("Evaluating models with maintenance cost optimization")
-        self._last_results = self._strategy.evaluate(models, X, y)
-        return self._last_results
+
+    def evaluate_models(self, models: List[Tuple[str, object]], 
+                        X: pd.DataFrame, y: pd.Series) -> dict:
+        """Evaluate models using current strategy."""
+        logger.info("Evaluating models using selected strategy")
+        self._results = self._strategy.evaluate(models, X, y)
+        return self._results
+
     def get_best_model(self, models: List[Tuple[str, object]]) -> Tuple[str, object]:
-        if not self._last_results:
-            raise ValueError("No evaluation results available. Run `evaluate_models()` first.")
+        """Return model with highest mean score from last evaluation."""
+        if not self._results:
+            raise ValueError("No results available. Run evaluate_models() first.")
 
-        best_model_name = None
-        best_score = float("-inf")
-        
-        for name, result in self._last_results.items():
-            if 'mean_score' in result and result['mean_score'] > best_score:
-                best_score = result['mean_score']
-                best_model_name = name
+        valid_results = {
+            name: res['mean_score'] for name, res in self._results.items()
+            if 'mean_score' in res
+        }
+        if not valid_results:
+            raise ValueError("No valid scores found. Check evaluation errors.")
 
-        if best_model_name is None:
-            raise ValueError("Could not determine the best model. Check evaluation results.")
+        best_name = max(valid_results, key=valid_results.get)
+        logger.info(f"Best model: {best_name} (Score: {valid_results[best_name]:.4f})")
+        return best_name, dict(models)[best_name]
 
-        # Retrieve the actual model object from input
-        model_dict = dict(models)
-        return best_model_name, model_dict[best_model_name]
     @staticmethod
-    def save_best_model(name: str, model, path="models"):
+    def save_best_model(name: str, model, path: str = "models") -> str:
+        """Persist best model to disk."""
         os.makedirs(path, exist_ok=True)
-        model_path = os.path.join(path, f"{name}_base.pkl")
-        dump(model, model_path)
-        logger.info(f"Best model '{name}' saved to: {model_path}")
-        return model_path
+        filepath = os.path.join(path, f"{name}_base.pkl")
+        dump(model, filepath)
+        logger.info(f"Saved best model '{name}' to {filepath}")
+        return filepath
 
 
-    # Example usage
+
 if __name__ == "__main__":
     pass
 
