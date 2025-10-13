@@ -21,7 +21,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(CURRENT_FILE_PATH))
 
 # --- Configuration ---
 # Update paths to point to the 'data' folder in the root directory
-LOCAL_DATA_PATH = os.path.join(PROJECT_ROOT, "data","raw\\" "Train.csv")
+LOCAL_DATA_PATH = os.path.join(PROJECT_ROOT, "data","raw/" "Train.csv")
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 
