@@ -8,9 +8,6 @@ from src.Get_Logging_Config import get_logger
 logger = get_logger(__name__)
 
 
-# -------------------------------
-# Base Abstract Class
-# -------------------------------
 class DataSampler(ABC):
     @abstractmethod
     def impute(self, df: pd.DataFrame, target_col: str) -> pd.DataFrame:
@@ -18,9 +15,7 @@ class DataSampler(ABC):
         pass
 
 
-# -------------------------------
-# SMOTE Oversampling
-# -------------------------------
+
 class SMOTESampler(DataSampler):
     def __init__(self, random_state: int = 42, k_neighbors: int = 5):
         self.random_state = random_state
@@ -63,9 +58,6 @@ class UnderSampler(DataSampler):
         return df_resampled
 
 
-# -------------------------------
-# Hybrid (SMOTE + ENN)
-# -------------------------------
 class SMOTEENNSampler(DataSampler):
     def __init__(self, random_state: int = 42):
         self.random_state = random_state

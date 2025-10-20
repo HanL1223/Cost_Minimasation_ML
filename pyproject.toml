@@ -22,5 +22,5 @@ dependencies = [
     "streamlit>=1.47.0",
     "uvicorn>=0.34.3",
     "xgboost>=3.0.1",
-    "zenml>=0.83.0",
+    "zenml[local]>=0.83.0",
 ]

@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 import pandas as pd
-from src.model_loader import ModelLoader
+from src.Model_Loader import ModelLoader
 import os
 
 st.title("Cost Prediction App")

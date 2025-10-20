@@ -54,3 +54,4 @@ class ClassificationModelEvaluator:
             "F1 Score": f1,
             "Min_vs_Model_Cost": cost_ratio
         }
+
