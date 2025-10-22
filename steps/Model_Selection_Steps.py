@@ -22,4 +22,4 @@ def model_selection_step(X_train, y_train) -> Tuple[str, Any]:
     results = evaluator.evaluate_models(models=models, X=X_train, y=y_train)
 
     best_model_name, best_model = evaluator.get_best_model(models)
-    return best_model_name, best_model
+    return best_model_name, best_model,results

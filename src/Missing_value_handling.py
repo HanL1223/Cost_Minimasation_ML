@@ -50,8 +50,6 @@ class FillMissingValue(MissingDataImputer):
             df_cleaned = df_cleaned.fillna(df_cleaned.select_dtypes('number').mean())
         elif self.method == 'median':
             df_cleaned = df_cleaned.fillna(df_cleaned.select_dtypes('number').median())
-        elif self.method == "constant":
-            df_cleaned = df_cleaned.fillna(self.fill_value)
         elif self.method == "mode":
             for column in df_cleaned.columns:
                 df_cleaned[column].fillna(df[column].mode().iloc[0], inplace=True)

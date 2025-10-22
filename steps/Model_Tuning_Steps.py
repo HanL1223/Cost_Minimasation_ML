@@ -25,5 +25,6 @@ def model_tuning_step(
         X_train,
         y_train
     )
+    model_path = tuner.save_tuned_model(best_model_name,best_model)
 
-    return tuned_model, best_params, best_score
+    return tuned_model, best_params, best_score,model_path

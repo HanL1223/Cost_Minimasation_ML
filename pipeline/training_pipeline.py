@@ -24,24 +24,23 @@ def main():
     logger.info("Start Training Pipeline")
 
     try:
-        # === Define paths ===
+        #Define paths
         artifacts_dir = os.path.join(os.getcwd(), "artifacts")
         os.makedirs(artifacts_dir, exist_ok=True)
 
-        # === Step 1: Data Ingestion ===
-        logger.info("📥 Starting data ingestion")
-        raw_data = data_ingestion_step(TRAIN_ENDPOINT).ingest(TRAIN_ENDPOINT)
+        #Data Ingestion Step
+        logger.info("Starting data ingestion")
+        raw_data = data_ingestion_step(TRAIN_ENDPOINT)
         logger.info(f"Data ingestion completed: {raw_data.shape}")
 
         # === Step 2: Missing Data Handling ===
-        logger.info("🧩 Handling missing data...")
+        logger.info(" Handling missing data...")
         clean_data = missing_value_step(raw_data,strategy='fill')
         logger.info(f"Missing data handled: {clean_data.shape}")
 
         # === Step 3: Sampling (if needed) ===
         logger.info("Performing data sampling...")
-        sampler = data_sampling_step(method='smoteenn',df = clean_data,target_col='Target')
-        sampled_data = sampler.sample(clean_data)
+        sampled_data = data_sampling_step(method='smoteenn',df = clean_data,target_col='Target')
         logger.info(f"Sampling completed: {sampled_data.shape}")
 
         # === Step 4: Data Split ===
@@ -51,9 +50,8 @@ def main():
 
         # === Step 5: Model Selection ===
         logger.info("🤖 Selecting the best model...")
-        selector = ModelSelector()
-        best_model_name, best_model, baseline_score = selector.select(X_train, y_train, X_test, y_test)
-        logger.info(f"Best model: {best_model_name} with baseline score {baseline_score}")
+        best_model_name, best_model = model_selection_step(X_train, y_train, X_test, y_test)
+        logger.info(f"Best model: {best_model_name}")
 
         # === Step 6: Model Tuning ===
         logger.info("⚙️ Tuning best model...")
