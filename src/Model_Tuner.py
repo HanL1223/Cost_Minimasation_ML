@@ -65,7 +65,7 @@ class OptunaTuning:
     # --------------------------------------------------
     # Objective Function for Optuna
     # --------------------------------------------------
-    def _objective(self, trial, model_class, X, y, param_space: Dict[str, Any]):
+    def _objective(self, trial, model_class, X, y, param_space: Dict[str, Any],X_val=None, y_val=None):
         """Define Optuna's objective function."""
 
         # Dynamically sample parameters from YAML search space
@@ -106,7 +106,7 @@ class OptunaTuning:
     # --------------------------------------------------
     # Run Optimization
     # --------------------------------------------------
-    def tune(self, model_name: str, model_class, X, y):
+    def tune(self, model_name: str, model_class, X, y,X_val = None,y_val = None):
         """Run Optuna hyperparameter optimization."""
         param_space = self.load_param_space(model_name)
 
@@ -115,7 +115,7 @@ class OptunaTuning:
         study = optuna.create_study(direction="maximize", study_name=f"{model_name}_optuna_tuning")
 
         study.optimize(
-            lambda trial: self._objective(trial, model_class, X, y, param_space),
+            lambda trial: self._objective(trial, model_class, X, y, param_space,X_val, y_val),
             n_trials=self.n_trials,
             n_jobs=1,
             show_progress_bar=True
