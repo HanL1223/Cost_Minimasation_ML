@@ -14,14 +14,23 @@ logger=get_logger(__name__)
 
 
 
-CURRENT_FILE_PATH = os.path.abspath(__file__) 
+#  Define Project Structure 
+CURRENT_FILE_PATH = Path(__file__).resolve() if "__file__" in globals() else Path.cwd()
+PROJECT_ROOT = CURRENT_FILE_PATH.parent.parent  # go up two levels to project root
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(CURRENT_FILE_PATH)) 
+# Optional environment variable override (for production)
+DATA_DIR = Path(os.getenv("DATA_DIR", PROJECT_ROOT / "data"))
+RAW_DIR = DATA_DIR / "raw"
 
+# Define file path
+LOCAL_DATA_PATH = RAW_DIR / "Train.csv"
 
-# --- Configuration ---
-# Update paths to point to the 'data' folder in the root directory
-LOCAL_DATA_PATH = os.path.join(PROJECT_ROOT, "data","raw/" "Train.csv")
+print("Project root:", PROJECT_ROOT)
+print("Data folder:", DATA_DIR)
+print("Raw data path:", LOCAL_DATA_PATH)
+
+# --- ✅ 3. Ensure directories exist ---
+RAW_DIR.mkdir(parents=True, exist_ok=True)
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 

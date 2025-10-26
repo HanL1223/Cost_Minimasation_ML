@@ -9,12 +9,12 @@ def model_tuning_step(
     best_model: Any,
     X_train,
     y_train
-) -> Tuple[Any, dict, float]:
+) -> Tuple[Any, dict, float,str]:
     """
     ZenML step to perform hyperparameter tuning using Optuna.
     Automatically uses the best model from model selection.
     """
-    tuner = OptunaTuning(config_dir="config", n_trials=50, cv_folds=5)
+    tuner = OptunaTuning(config_dir="config", n_trials=3, cv_folds=5)
 
     # Pass dynamic model name and class directly
     best_model_class = best_model.__class__

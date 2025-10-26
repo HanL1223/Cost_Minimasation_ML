@@ -34,7 +34,7 @@ class CrossValidationEvaluation(ModelSelection):
             cm = confusion_matrix(y_true, y_pred)
             TN, FP, FN, TP = cm.ravel()
 
-            # ⚙️ Uses cost_params local variable
+            #Uses cost_params local variable
             repair = cost_params['tp_cost']
             replacement = cost_params['fn_cost']
             inspection = cost_params['fp_cost']

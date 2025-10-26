@@ -49,12 +49,12 @@ def main():
         logger.info(f"Split done: Train={len(X_train)}, Test={len(X_test)}")
 
         # === Step 5: Model Selection ===
-        logger.info("🤖 Selecting the best model...")
+        logger.info("Selecting the best model...")
         best_model_name, best_model = model_selection_step(X_train, y_train, X_test, y_test)
         logger.info(f"Best model: {best_model_name}")
 
         # === Step 6: Model Tuning ===
-        logger.info("⚙️ Tuning best model...")
+        logger.info("Tuning best model...")
         tuner = ModelTuner(model=best_model)
         tuned_model, tuned_score = tuner.tune(X_train, y_train, X_test, y_test)
         logger.info(f"Model tuning done: {tuned_model.__class__.__name__} - Final score: {tuned_score}")
@@ -63,14 +63,14 @@ def main():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         model_path = os.path.join(artifacts_dir, f"best_model_{timestamp}.pkl")
         joblib.dump(tuned_model, model_path)
-        logger.info(f"💾 Model saved at {model_path}")
+        logger.info(f"Model saved at {model_path}")
 
         # === Step 8: Summary ===
         elapsed = time.time() - start_time
-        logger.info(f"🎉 Training pipeline completed in {elapsed:.2f} seconds")
+        logger.info(f"Training pipeline completed in {elapsed:.2f} seconds")
 
     except Exception as e:
-        logger.error(f"❌ Pipeline failed: {str(e)}")
+        logger.error(f"Pipeline failed: {str(e)}")
         logger.error(traceback.format_exc())
         sys.exit(1)
 
